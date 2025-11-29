@@ -1,4 +1,4 @@
-name: Deploy Cognito
+name: Deploy Auth Lambda
 
 on:
   push:
@@ -28,9 +28,6 @@ jobs:
           # Build
           sam build --template-file infra/auth-lambda.yml
 
-          # Build the CORS origins string with inner single-quotes, as SAM expects
-          ORIGIN_LIST="'http://localhost:5173,${{ vars.CLOUDFRONT_URL }}'"
-
           # Deploy
           sam deploy \
             --template-file infra/auth-lambda.yml \
@@ -38,6 +35,6 @@ jobs:
             --parameter-overrides \
               CognitoRegion=us-west-2 \
               CognitoUserPoolId=us-west-2_xxxxxx \
-              OriginList=$ORIGIN_LIST \
+              "OriginList=\"'http://localhost:5173,${{ vars.CLOUDFRONT_URL }}'\""  \
             --resolve-s3 \
             --capabilities CAPABILITY_IAM
