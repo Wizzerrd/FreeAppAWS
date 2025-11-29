@@ -10,10 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AWS_REGION: us-west-2
-      STACK_NAME: free-app-frontend
-      BUCKET_NAME: free-app-frontend
-      TEMPLATE_FILE: infra/frontend-s3-cloudfront.yml
+      STACK_NAME: ${{vars.APP_NAME}}-frontend
+      BUCKET_NAME: ${{vars.APP_NAME}}-frontend
       FRONTEND_DIR: frontend
       BUILD_DIR: dist
 
@@ -37,23 +35,23 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy CloudFormation stack (S3 + CloudFront)
         run: |
           aws cloudformation deploy \
-            --template-file "$TEMPLATE_FILE" \
+            --template-file infra/frontend-s3-cloudfront.yml \
             --stack-name "$STACK_NAME" \
             --parameter-overrides BucketName="$BUCKET_NAME" \
             --capabilities CAPABILITY_NAMED_IAM \
-            --region "$AWS_REGION" \
+            --region ${{vars.AWS_REGION}} \
             --no-fail-on-empty-changeset
 
       - name: Sync built frontend to S3
         run: |
           aws s3 sync "$FRONTEND_DIR/$BUILD_DIR" "s3://$BUCKET_NAME" \
             --delete \
-            --region "$AWS_REGION"
+            --region ${{vars.AWS_REGION}}
 
       - name: Get CloudFront distribution ID from stack
         id: cf
@@ -63,7 +61,7 @@ jobs:
             --logical-resource-id CloudFrontDistribution \
             --query 'StackResources[0].PhysicalResourceId' \
             --output text \
-            --region "$AWS_REGION")
+            --region ${{vars.AWS_REGION}})
           echo "distribution_id=$DIST_ID" >> "$GITHUB_OUTPUT"
 
       - name: Invalidate CloudFront cache
