@@ -3,6 +3,9 @@ name: Deploy Auth Lambda
 on:
   push:
     branches: [ main ]
+    paths: 
+        - "auth-lambda/"
+        - "infra/auth-lambda.yml"
   workflow_dispatch: {}
 
 jobs:

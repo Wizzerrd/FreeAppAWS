@@ -3,6 +3,8 @@ name: Deploy Cognito
 on:
   push:
     branches: [ main ]
+    paths:
+        - infra/auth-cognito.yml
   workflow_dispatch: {}
 
 jobs:
