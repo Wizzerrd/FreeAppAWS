@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cognito User Pool + SPA client for my app
+
+Parameters:
+  AppName:
+    Type: String
+    Default: free-app
+  CallbackUrl:
+    Type: String
+    Description: SPA callback URL (CloudFront)
+    Default: https://YOUR_CLOUDFRONT_URL
+  LogoutUrl:
+    Type: String
+    Description: SPA logout redirect URL
+    Default: https://YOUR_CLOUDFRONT_URL
+  DomainPrefix:
+    Type: String
+    Description: Unique Cognito domain prefix (must be globally unique per region)
+    Default: free-app
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${AppName}-user-pool"
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub "${AppName}-spa-client"
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code   # auth code + PKCE (recommended for SPA)
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+      CallbackURLs:
+        - !Ref CallbackUrl
+        - http://localhost:5173
+      LogoutURLs:
+        - !Ref LogoutUrl
+        - http://localhost:5173
+      SupportedIdentityProviders:
+        - COGNITO
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      PreventUserExistenceErrors: ENABLED
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref DomainPrefix
+      UserPoolId: !Ref UserPool
+
+Outputs:
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub "${AppName}-UserPoolId"
+
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub "${AppName}-UserPoolClientId"
+
+  UserPoolDomainPrefix:
+    Description: Cognito Hosted UI domain prefix
+    Value: !Ref UserPoolDomain
+    Export:
+      Name: !Sub "${AppName}-UserPoolDomainPrefix"
+
+  CognitoRegion:
+    Description: AWS region for this stack
+    Value: !Ref "AWS::Region"
+    Export:
+      Name: !Sub "${AppName}-CognitoRegion"
