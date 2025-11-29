@@ -43,6 +43,7 @@ Resources:
         Variables:
           COGNITO_REGION: !Ref CognitoRegion
           COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+          ALLOWED_ORIGINS: !Ref OriginList
       Events:
         MeEndpoint:
           Type: Api
