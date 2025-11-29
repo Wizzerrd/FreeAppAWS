@@ -1,0 +1,57 @@
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  CognitoRegion:
+    Type: String
+    Default: us-west-2
+
+  CognitoUserPoolId:
+    Type: String
+    Description: User Pool ID (e.g. us-west-2_abc123)
+
+  OriginList:
+    Type: String
+    Description: CORS Origins (SAM comma-separated list) 
+    # Example: "'http://localhost:5173,https://your-cloudfront-domain'"
+    Default: "'http://localhost:5173'"
+
+Resources:
+  # Explicit API with CORS + Cognito authorizer
+  HttpApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowOrigin: !Ref OriginList
+        AllowHeaders: "'Authorization,Content-Type'"
+        AllowMethods: "'GET,OPTIONS'"
+      Auth:
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}
+            IdentitySource: method.request.header.Authorization
+        DefaultAuthorizer: CognitoAuthorizer
+
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs20.x
+      Handler: index.handler
+      CodeUri: ../auth-lambda
+      Timeout: 5
+      Environment:
+        Variables:
+          COGNITO_REGION: !Ref CognitoRegion
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+      Events:
+        MeEndpoint:
+          Type: Api
+          Properties:
+            RestApiId: !Ref HttpApi
+            Path: /me
+            Method: GET
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway Invoke URL
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/me"
