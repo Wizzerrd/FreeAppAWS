@@ -1,0 +1,36 @@
+name: Deploy Cognito
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: aws-actions/setup-sam
+      - name: SAM Build & Deploy (Auth Lambda)
+        run: |
+          sam build --template-file infra/auth-lambda.yml
+          sam deploy \
+            --template-file infra/auth-lambda.yml \
+            --stack-name free-app-auth-lambda \
+            --profile free-app-ci \
+            --parameter-overrides \
+                CognitoRegion=us-west-2 \
+                CognitoUserPoolId=us-west-2_xxxxxx \
+                "OriginList=\"'http://localhost:5173,${{vars.CLOUDFRONT_URL}}'\"" \
+            --resolve-s3 \
+            --capabilities CAPABILITY_IAM
