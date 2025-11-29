@@ -6,7 +6,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  deploy-frontend:
+  deploy-auth-lambda:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,17 +20,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: aws-actions/setup-sam
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+
       - name: SAM Build & Deploy (Auth Lambda)
         run: |
+          # Build
           sam build --template-file infra/auth-lambda.yml
+
+          # Build the CORS origins string with inner single-quotes, as SAM expects
+          ORIGIN_LIST="'http://localhost:5173,${{ vars.CLOUDFRONT_URL }}'"
+
+          # Deploy
           sam deploy \
             --template-file infra/auth-lambda.yml \
             --stack-name free-app-auth-lambda \
-            --profile free-app-ci \
             --parameter-overrides \
-                CognitoRegion=us-west-2 \
-                CognitoUserPoolId=us-west-2_xxxxxx \
-                "OriginList=\"'http://localhost:5173,${{vars.CLOUDFRONT_URL}}'\"" \
+              CognitoRegion=us-west-2 \
+              CognitoUserPoolId=us-west-2_xxxxxx \
+              OriginList=$ORIGIN_LIST \
             --resolve-s3 \
             --capabilities CAPABILITY_IAM
