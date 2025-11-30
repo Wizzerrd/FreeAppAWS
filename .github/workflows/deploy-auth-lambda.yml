@@ -1,4 +1,4 @@
-name: Deploy Auth Lambda
+name: Deploy Prod Auth Lambda
 
 on:
   push:
@@ -34,10 +34,11 @@ jobs:
           # Deploy
           sam deploy \
             --template-file infra/auth-lambda.yml \
-            --stack-name free-app-auth-lambda \
+            --stack-name free-app-auth-lambda-prod \
             --parameter-overrides \
-              CognitoRegion=us-west-2 \
-              CognitoUserPoolId=us-west-2_xxxxxx \
-              "OriginList=\"'http://localhost:5173,${{ vars.CLOUDFRONT_URL }}'\""  \
+              CognitoRegion=${{vars.AWS_REGION}} \
+              CognitoUserPoolId=${{vars.COGNITO_USER_POOL_ID}} \
+              StageName=Prod \
+              "CloudFrontOrigin=\"'${{vars.CLOUDFRONT_URL}}'\"" \
             --resolve-s3 \
             --capabilities CAPABILITY_IAM

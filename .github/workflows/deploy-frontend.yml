@@ -27,6 +27,16 @@ jobs:
         with:
           node-version: "20"
 
+      # ✅ Inject all environment variables for Vite build
+      - name: Create .env file
+        run: |
+          echo "VITE_API_BASE=${{vars.API_BASE}}" >> frontend/.env
+          echo "VITE_COGNITO_CLIENT_ID=${{vars.COGNITO_CLIENT_ID}}" >> frontend/.env
+          echo "VITE_COGNITO_DOMAIN=${{vars.COGNITO_DOMAIN}}" >> frontend/.env
+          echo "VITE_COGNITO_LOGOUT_URI = ${{vars.LOGOUT_URL}}" >> frontend/.env
+          echo "VITE_COGNITO_REDIRECT_URI=${{vars.CALLBACK_URL}}" >> frontend/.env
+          echo "VITE_COGNITO_USER_POOL_ID = ${{vars.COGNITO_USER_POOL_ID}}" >> frontend/.env
+
       - name: Install deps and build frontend
         working-directory: ${{ env.FRONTEND_DIR }}
         run: |
