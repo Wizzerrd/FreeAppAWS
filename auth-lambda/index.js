@@ -1,10 +1,4 @@
-const allowedOrigins = new Set(
-    (process.env.ALLOWED_ORIGINS || "")
-        .slice(1,-1)
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-);
+const allowedOrigin = process.env.ALLOWED_ORIGIN.slice(1, -1);
 
 export const handler = async (event) => {
     // Extract claims from API Gateway Cognito Authorizer
@@ -19,7 +13,7 @@ export const handler = async (event) => {
     const headers = {};
 
     // Dynamic CORS logic based on allow-list
-    if (origin && allowedOrigins.has(origin)) {
+    if (origin && allowedOrigin === origin) {
         headers["Access-Control-Allow-Origin"] = origin;
         headers["Vary"] = "Origin"; // Best practice for caches
     }

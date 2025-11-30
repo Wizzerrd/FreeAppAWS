@@ -9,28 +9,32 @@ Parameters:
     Type: String
     Description: User Pool ID (e.g. us-west-2_abc123)
 
-  OriginList:
+  CloudFrontOrigin:
     Type: String
-    Description: CORS Origins (SAM comma-separated list) 
-    # Example: "'http://localhost:5173,https://your-cloudfront-domain'"
+    Description: CORS Origin
+    # Example: "'http://localhost:5173'"
     Default: "'http://localhost:5173'"
+
+  StageName:
+    Type: String
+    Default: Dev
 
 Resources:
   # Explicit API with CORS + Cognito authorizer
   HttpApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: Prod
+      StageName: !Ref StageName
       Cors:
-        AllowOrigin: !Ref OriginList
+        AllowOrigin: !Ref CloudFrontOrigin
         AllowHeaders: "'Authorization,Content-Type'"
         AllowMethods: "'GET,OPTIONS'"
       Auth:
         Authorizers:
           CognitoAuthorizer:
-            UserPoolArn: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}
+            UserPoolArn: !Sub arn:aws:cognito-idp:${CognitoRegion}:${AWS::AccountId}:userpool/${CognitoUserPoolId}
             IdentitySource: method.request.header.Authorization
-        DefaultAuthorizer: CognitoAuthorizer
+        # DefaultAuthorizer: CognitoAuthorizer
 
   AuthFunction:
     Type: AWS::Serverless::Function
@@ -41,9 +45,7 @@ Resources:
       Timeout: 5
       Environment:
         Variables:
-          COGNITO_REGION: !Ref CognitoRegion
-          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
-          ALLOWED_ORIGINS: !Ref OriginList
+          ALLOWED_ORIGIN: !Ref CloudFrontOrigin
       Events:
         MeEndpoint:
           Type: Api
@@ -51,8 +53,11 @@ Resources:
             RestApiId: !Ref HttpApi
             Path: /me
             Method: GET
+            Auth:
+              Authorizer: CognitoAuthorizer
 
 Outputs:
   ApiUrl:
     Description: API Gateway Invoke URL
-    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/me"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
+
