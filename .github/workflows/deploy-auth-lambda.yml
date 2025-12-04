@@ -33,7 +33,6 @@ jobs:
 
           # Deploy
           sam deploy \
-            --template-file infra/auth-lambda.yml \
             --stack-name free-app-auth-lambda-prod \
             --parameter-overrides \
               CognitoRegion=${{vars.AWS_REGION}} \
