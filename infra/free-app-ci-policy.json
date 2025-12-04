@@ -58,10 +58,34 @@
 			"Resource": "*"
 		},
 		{
-			"Sid": "ServiceLinkedRole",
+			"Sid": "IAM",
 			"Effect": "Allow",
 			"Action": [
-				"iam:CreateServiceLinkedRole"
+				"iam:*"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "Lambda",
+			"Effect": "Allow",
+			"Action": [
+				"lambda:*"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "APIGateway",
+			"Effect": "Allow",
+			"Action": [
+				"apigateway:*"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "DynamoDB",
+			"Effect": "Allow",
+			"Action": [
+				"dynamodb:*"
 			],
 			"Resource": "*"
 		}

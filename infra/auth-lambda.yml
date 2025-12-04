@@ -20,7 +20,6 @@ Parameters:
     Default: Dev
 
 Resources:
-  # Explicit API with CORS + Cognito authorizer
   HttpApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -36,6 +35,19 @@ Resources:
             IdentitySource: method.request.header.Authorization
         # DefaultAuthorizer: CognitoAuthorizer
 
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub "${AWS::StackName}-users"
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
   AuthFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -46,6 +58,7 @@ Resources:
       Environment:
         Variables:
           ALLOWED_ORIGIN: !Ref CloudFrontOrigin
+          USERS_TABLE: !Ref UsersTable
       Events:
         MeEndpoint:
           Type: Api
@@ -55,9 +68,11 @@ Resources:
             Method: GET
             Auth:
               Authorizer: CognitoAuthorizer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
 
 Outputs:
   ApiUrl:
     Description: API Gateway Invoke URL
     Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
-
