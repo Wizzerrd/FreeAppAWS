@@ -50,6 +50,14 @@ Resources:
 
   AuthFunction:
     Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+          - index.ts
+        Minify: true
+        Target: "node20"
+        Sourcemap: true
     Properties:
       Runtime: nodejs20.x
       Handler: index.handler
