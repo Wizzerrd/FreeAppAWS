@@ -1,3 +1,4 @@
 .env
 *accessKeys.csv
 .aws-sam
+node_modules

@@ -26,6 +26,10 @@ jobs:
       - name: Setup SAM CLI
         uses: aws-actions/setup-sam@v2
 
+      - name: Install dependencies
+        working-directory: auth-lambda
+        run: npm install
+
       - name: SAM Build & Deploy (Auth Lambda)
         run: |
           # Build
