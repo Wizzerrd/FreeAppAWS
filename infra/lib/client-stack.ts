@@ -42,6 +42,9 @@ function clientSiteSource(): s3deploy.ISource {
 }
 
 export class FreeAppClientStack extends cdk.Stack {
+    /** HTTPS URL of the CloudFront distribution (for OAuth redirects and app config). */
+    public readonly publicAppUrl: string;
+
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
@@ -74,6 +77,8 @@ export class FreeAppClientStack extends cdk.Stack {
             ],
         });
 
+        this.publicAppUrl = `https://${distribution.distributionDomainName}/`;
+
         new s3deploy.BucketDeployment(this, 'DeployClient', {
             sources: [clientSiteSource()],
             destinationBucket: freeAppClientBucket,
@@ -82,9 +87,9 @@ export class FreeAppClientStack extends cdk.Stack {
             prune: true,
         });
 
-        new cdk.CfnOutput(this, 'DistributionDomainName', {
-            value: distribution.distributionDomainName,
-            exportName: 'FreeAppClientDistributionDomainName',
+        new cdk.CfnOutput(this, 'PublicAppUrl', {
+            value: this.publicAppUrl,
+            exportName: 'FreeAppClientPublicAppUrl',
         } as cdk.CfnOutputProps);
     }
 }

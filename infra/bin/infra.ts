@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core';
+import { FreeAppAuthStack } from '../lib/auth-stack';
 import { FreeAppClientStack } from '../lib/client-stack';
 import dotenv from 'dotenv';
 
@@ -13,6 +14,14 @@ const env = {
 console.log('env', env);
 
 const app = new cdk.App();
-new FreeAppClientStack(app, 'FreeAppClientStack', {
+
+const clientStack = new FreeAppClientStack(app, 'FreeAppClientStack', {
   env,
 });
+
+new FreeAppAuthStack(app, 'FreeAppAuthStack', {
+  env,
+  appUrl: clientStack.publicAppUrl,
+});
+
+
