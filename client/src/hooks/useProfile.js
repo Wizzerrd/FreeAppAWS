@@ -1,6 +1,6 @@
 import { useAuth } from '../auth/AuthContext'
 
-/** @deprecated Prefer useAuth() — profile state lives on the auth context globally. */
+/** @deprecated Profile and session state are exposed by useAuth() in ../auth/AuthContext. */
 export function useProfile() {
   const {
     user,

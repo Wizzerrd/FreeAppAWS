@@ -130,7 +130,7 @@ export function AuthProvider({ children }) {
     async (email, password) => {
       const { session } = await signInWithPassword(email, password)
       const oidcUser = await persistSessionAsOidcUser(session)
-      // storeUser does not raise UserLoaded (unlike signinRedirectCallback)
+      // Password sign-in must set user in React state; storeUser does not emit UserLoaded.
       setUser(oidcUser)
     },
     [],

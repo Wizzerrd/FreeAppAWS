@@ -14,9 +14,8 @@ function normalizeCognitoDomainHost(raw) {
 }
 
 /**
- * Cognito only serves OAuth at the user-pool **domain** (`*.auth.{region}.amazoncognito.com`).
- * Hitting `cognito-idp.../authorize` returns:
- * `{"code":"BadRequest","message":"The server did not understand the operation that was requested."}`.
+ * OAuth authorize, token, and logout endpoints are served from the pool auth domain host
+ * (`*.auth.{region}.amazoncognito.com`). metadataSeed supplies those URLs; authority stays on cognito-idp.
  *
  * @returns {Record<string, string> | undefined}
  */
@@ -84,7 +83,8 @@ export function completeSignInRedirect() {
 }
 
 /**
- * Cognito hosted UI /logout requires client_id and logout_uri (not OIDC post_logout_redirect_uri).
+ * Sign-out clears the local OIDC session, then redirects to Cognito hosted UI /logout with
+ * client_id and logout_uri query parameters (see AWS logout endpoint docs).
  * @see https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html
  */
 export async function signOutRedirect() {

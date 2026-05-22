@@ -2,7 +2,7 @@ import { User } from 'oidc-client-ts'
 import { getUserManager } from './cognito'
 
 /**
- * Store Cognito SRP tokens in the same session store as the OAuth redirect flow.
+ * Persist password (SRP) sign-in tokens in the oidc-client-ts session store as an OIDC User.
  * @param {import('amazon-cognito-identity-js').CognitoUserSession} session
  * @returns {Promise<User>}
  */
