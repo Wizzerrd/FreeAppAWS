@@ -3,18 +3,10 @@ import { useAuth } from '../auth/AuthContext'
 import '../App.css'
 
 export default function Login() {
-  const { user, loading, configured, signIn } = useAuth()
-
-  if (loading) {
-    return (
-      <main className="auth-shell">
-        <p className="auth-muted">Loading…</p>
-      </main>
-    )
-  }
+  const { user, configured, signIn } = useAuth()
 
   if (user) {
-    return <Navigate to="/profile" replace />
+    return <Navigate to="/" replace />
   }
 
   return (

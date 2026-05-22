@@ -1,11 +1,13 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react'
-import { getUserManager, isCognitoConfigured } from './cognito'
+import { ApiError, apiFetch, isApiConfigured } from '../api/client'
+import { getUserManager, isCognitoConfigured, signOutRedirect } from './cognito'
 
 const AuthContext = createContext(undefined)
 
@@ -13,7 +15,56 @@ export function AuthProvider({ children }) {
   const configured = isCognitoConfigured()
   const userManager = useMemo(() => (configured ? getUserManager() : null), [configured])
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(Boolean(configured))
+  const [sessionLoading, setSessionLoading] = useState(Boolean(configured))
+  const [profile, setProfile] = useState(null)
+  const [profileNotFound, setProfileNotFound] = useState(false)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileError, setProfileError] = useState(null)
+
+  const loadProfile = useCallback(async (sessionUser) => {
+    if (!sessionUser) {
+      setProfile(null)
+      setProfileNotFound(false)
+      setProfileError(null)
+      setProfileLoading(false)
+      return
+    }
+
+    if (!isApiConfigured()) {
+      setProfile(null)
+      setProfileNotFound(false)
+      setProfileError('API is not configured. Set VITE_API_BASE_URL in client/.env')
+      setProfileLoading(false)
+      return
+    }
+
+    setProfileLoading(true)
+    setProfileError(null)
+
+    try {
+      const data = await apiFetch('/users/me', { user: sessionUser })
+      setProfile(data)
+      setProfileNotFound(false)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setProfile(null)
+        setProfileNotFound(true)
+        return
+      }
+      setProfile(null)
+      setProfileNotFound(false)
+      setProfileError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setProfileLoading(false)
+    }
+  }, [])
+
+  const refreshProfile = useCallback(() => {
+    if (user) {
+      return loadProfile(user)
+    }
+    return Promise.resolve()
+  }, [user, loadProfile])
 
   useEffect(() => {
     if (!userManager) {
@@ -25,7 +76,7 @@ export function AuthProvider({ children }) {
     userManager.getUser().then((u) => {
       if (!cancelled) {
         setUser(u)
-        setLoading(false)
+        setSessionLoading(false)
       }
     })
 
@@ -41,16 +92,61 @@ export function AuthProvider({ children }) {
     }
   }, [userManager])
 
+  useEffect(() => {
+    if (sessionLoading) {
+      return undefined
+    }
+
+    if (!user) {
+      setProfile(null)
+      setProfileNotFound(false)
+      setProfileError(null)
+      setProfileLoading(false)
+      return undefined
+    }
+
+    let cancelled = false
+    loadProfile(user).then(() => {
+      if (cancelled) {
+        return
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [sessionLoading, user, loadProfile])
+
+  const appLoading = sessionLoading || Boolean(user && profileLoading)
+
   const value = useMemo(
     () => ({
       user,
-      loading,
+      loading: sessionLoading,
+      sessionLoading,
+      appLoading,
+      profile,
+      profileNotFound,
+      profileLoading,
+      profileError,
+      refreshProfile,
       configured,
       userManager,
       signIn: () => userManager?.signinRedirect(),
-      signOut: () => userManager?.signoutRedirect(),
+      signOut: () => signOutRedirect(),
     }),
-    [user, loading, configured, userManager],
+    [
+      user,
+      sessionLoading,
+      appLoading,
+      profile,
+      profileNotFound,
+      profileLoading,
+      profileError,
+      refreshProfile,
+      configured,
+      userManager,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,39 +1,16 @@
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import ProfileDetails from '../components/profile/ProfileDetails'
-import { useProfile } from '../hooks/useProfile'
 import { useAuth } from '../auth/AuthContext'
 import '../App.css'
 
 export default function Profile() {
-  const { signOut } = useAuth()
-  const { profile, profileLoading, notFound, error, authLoading, configured, user } =
-    useProfile()
+  const { signOut, profile, profileError } = useAuth()
 
-  if (!configured) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (authLoading || profileLoading) {
-    return (
-      <main className="auth-shell">
-        <p className="auth-muted">Loading profile…</p>
-      </main>
-    )
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (notFound) {
-    return <Navigate to="/profile/setup" replace />
-  }
-
-  if (error) {
+  if (profileError) {
     return (
       <main className="auth-shell">
         <h1 className="auth-title">Profile</h1>
-        <p className="auth-error">{error}</p>
+        <p className="auth-error">{profileError}</p>
         <p className="auth-footer">
           <Link to="/">Home</Link>
         </p>
@@ -42,11 +19,7 @@ export default function Profile() {
   }
 
   if (!profile) {
-    return (
-      <main className="auth-shell">
-        <p className="auth-muted">Loading profile…</p>
-      </main>
-    )
+    return null
   }
 
   return (

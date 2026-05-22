@@ -82,3 +82,30 @@ export function completeSignInRedirect() {
   }
   return signinRedirectCallbackPromise
 }
+
+/**
+ * Cognito hosted UI /logout requires client_id and logout_uri (not OIDC post_logout_redirect_uri).
+ * @see https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html
+ */
+export async function signOutRedirect() {
+  const um = getUserManager()
+  const settings = getOidcSettings()
+  if (!um || !settings) {
+    return
+  }
+
+  const host = normalizeCognitoDomainHost(import.meta.env.VITE_COGNITO_DOMAIN)
+  const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID
+  const logoutUri = encodeURIComponent(window.location.origin)
+
+  await um.removeUser()
+
+  if (host && clientId) {
+    window.location.assign(
+      `https://${host}/logout?client_id=${encodeURIComponent(clientId)}&logout_uri=${logoutUri}`,
+    )
+    return
+  }
+
+  return um.signoutRedirect()
+}

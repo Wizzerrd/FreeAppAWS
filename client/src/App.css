@@ -210,6 +210,10 @@
   justify-content: center;
 }
 
+.app-loading {
+  min-height: 100vh;
+}
+
 .auth-title {
   color: var(--text-h);
   font-family: var(--heading);

@@ -8,17 +8,17 @@ import '../App.css'
 
 function Landing() {
   const [count, setCount] = useState(0)
-  const { user, loading } = useAuth()
+  const { user, appLoading } = useAuth()
 
   return (
     <>
       <header className="site-header">
         <nav className="site-nav">
-          {!loading && user ? (
+          {!appLoading && user ? (
             <Link to="/profile" className="site-nav-link">
               Profile
             </Link>
-          ) : !loading ? (
+          ) : !appLoading ? (
             <Link to="/login" className="site-nav-link">
               Sign in
             </Link>

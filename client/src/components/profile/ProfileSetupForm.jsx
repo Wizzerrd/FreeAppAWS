@@ -18,7 +18,7 @@ export default function ProfileSetupForm({ user, onComplete }) {
         method: 'POST',
         body: { firstName, lastName },
       })
-      onComplete?.()
+      await onComplete?.()
     } catch (err) {
       const message =
         err instanceof ApiError
